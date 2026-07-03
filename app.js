@@ -1,190 +1,479 @@
-const list = document.getElementById("responseList");
-const searchBox = document.getElementById("searchBox");
-const clearBtn = document.getElementById("clearBtn");
-const statusBox = document.getElementById("status");
-const categoryList = document.getElementById("categoryList");
-const themeBtn = document.getElementById("themeBtn");
+(function () {
+  "use strict";
 
-let visibleResponses = [];
-let selectedCategory = "All";
-let favorites = JSON.parse(localStorage.getItem("frandyAssistantFavorites") || "[]");
-let darkMode = localStorage.getItem("frandyAssistantDark") === "true";
+  var titleFields = ["title", "name", "label", "shortcut", "key"];
+  var bodyFields = ["body", "text", "content", "response", "value", "message", "template", "snippet", "copy"];
+  var categoryFields = ["category", "group", "folder", "type", "section"];
+  var tagFields = ["tags", "tag", "keywords", "keyword", "labels"];
+  var collectionFields = ["items", "snippets", "responses", "children", "entries"];
 
-function saveFavorites() {
-  localStorage.setItem("frandyAssistantFavorites", JSON.stringify(favorites));
-}
-
-function itemId(item) {
-  return item.id || `${item.category}-${item.title}`.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-}
-
-function isFavorite(item) {
-  return favorites.includes(itemId(item));
-}
-
-function toggleFavorite(item) {
-  const id = itemId(item);
-  favorites = favorites.includes(id) ? favorites.filter(x => x !== id) : [...favorites, id];
-  saveFavorites();
-  renderCategories();
-  render();
-}
-
-function showStatus(message) {
-  statusBox.textContent = message;
-  setTimeout(() => {
-    if (statusBox.textContent === message) statusBox.textContent = "";
-  }, 1800);
-}
-
-async function copyText(item) {
-  try {
-    await navigator.clipboard.writeText(item.text);
-    showStatus(`Copied: ${item.title}`);
-  } catch (err) {
-    showStatus("Copy failed. Open with HTTPS/GitHub Pages, then try again.");
-  }
-}
-
-function categoryEmoji(category) {
-  const map = {
-    All: "📚",
-    Favorites: "⭐",
-    Accounts: "👤",
-    MFA: "📱",
-    ServiceNow: "🎫",
-    SAP: "📦",
-    Teams: "💬",
-    "Office 365": "📧",
-    General: "✅"
+  var state = {
+    snippets: [],
+    visible: [],
+    selectedIndex: 0,
+    query: ""
   };
-  return map[category] || "📁";
-}
 
-function getCategoryCounts() {
-  const counts = { All: window.RESPONSES.length, Favorites: window.RESPONSES.filter(isFavorite).length };
-  window.RESPONSES.forEach(item => {
-    counts[item.category] = (counts[item.category] || 0) + 1;
-  });
-  return counts;
-}
+  var els = {
+    search: document.getElementById("searchInput"),
+    list: document.getElementById("snippetList"),
+    empty: document.getElementById("emptyState"),
+    count: document.getElementById("resultCount"),
+    toast: document.getElementById("toast")
+  };
 
-function renderCategories() {
-  const counts = getCategoryCounts();
-  const categories = ["All", "Favorites", ...Object.keys(counts).filter(c => c !== "All" && c !== "Favorites").sort()];
-  categoryList.innerHTML = "";
+  var toastTimer = 0;
 
-  categories.forEach(category => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = `category-btn ${selectedCategory === category ? "active" : ""}`;
-    btn.innerHTML = `<span>${categoryEmoji(category)} ${escapeHtml(category)}</span><span class="count">${counts[category] || 0}</span>`;
-    btn.addEventListener("click", () => {
-      selectedCategory = category;
-      renderCategories();
-      render();
-      searchBox.focus();
-    });
-    categoryList.appendChild(btn);
-  });
-}
+  function getSnippetSource() {
+    if (typeof responses !== "undefined") return responses;
+    if (typeof RESPONSES !== "undefined") return RESPONSES;
+    if (typeof snippets !== "undefined") return snippets;
+    if (typeof SNIPPETS !== "undefined") return SNIPPETS;
+    if (typeof quickTextResponses !== "undefined") return quickTextResponses;
+    if (typeof QUICK_TEXT_RESPONSES !== "undefined") return QUICK_TEXT_RESPONSES;
 
-function render() {
-  const query = searchBox.value.trim().toLowerCase();
-
-  visibleResponses = window.RESPONSES.filter(item => {
-    const combined = `${item.title} ${item.category} ${item.text}`.toLowerCase();
-    const matchesQuery = combined.includes(query);
-    const matchesCategory = selectedCategory === "All" ||
-      (selectedCategory === "Favorites" && isFavorite(item)) ||
-      item.category === selectedCategory;
-    return matchesQuery && matchesCategory;
-  }).sort((a, b) => Number(isFavorite(b)) - Number(isFavorite(a)) || a.title.localeCompare(b.title));
-
-  list.innerHTML = "";
-
-  if (visibleResponses.length === 0) {
-    list.innerHTML = `<div class="empty">No matching responses found.</div>`;
-    return;
+    return (
+      window.responses ||
+      window.RESPONSES ||
+      window.snippets ||
+      window.SNIPPETS ||
+      window.quickTextResponses ||
+      window.QUICK_TEXT_RESPONSES ||
+      []
+    );
   }
 
-  visibleResponses.forEach((item, index) => {
-    const card = document.createElement("article");
-    card.className = "card";
-    const shortcut = index < 9 ? `<div class="shortcut">Ctrl + ${index + 1}</div>` : "";
-    const star = isFavorite(item) ? "★" : "☆";
+  function normalizeSource(source) {
+    var snippets = [];
 
-    card.innerHTML = `
-      <div class="card-top">
-        <div>
-          <div class="title-row">
-            <button class="favorite" type="button" title="Favorite">${star}</button>
-            <h2 class="title">${escapeHtml(item.title)}</h2>
-          </div>
-          <span class="category">${escapeHtml(item.category)}</span>
-        </div>
-        <button class="copy-btn" type="button">Copy</button>
-      </div>
-      <div class="preview">${escapeHtml(item.text)}</div>
-      ${shortcut}
-    `;
+    function visit(value, context) {
+      var nextContext = context || {};
 
-    card.querySelector(".copy-btn").addEventListener("click", (event) => {
-      event.stopPropagation();
-      copyText(item);
-    });
-    card.querySelector(".favorite").addEventListener("click", (event) => {
-      event.stopPropagation();
-      toggleFavorite(item);
-    });
-    card.addEventListener("click", () => copyText(item));
-    list.appendChild(card);
-  });
-}
+      if (value == null) return;
 
-function escapeHtml(text) {
-  return String(text)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+      if (typeof value === "string" || typeof value === "number") {
+        addSnippet({
+          title: nextContext.title || deriveTitle(String(value)),
+          body: String(value),
+          category: nextContext.category || "",
+          tags: nextContext.tags || []
+        });
+        return;
+      }
 
-function applyTheme() {
-  document.body.classList.toggle("dark", darkMode);
-  themeBtn.textContent = darkMode ? "Light" : "Dark";
-  localStorage.setItem("frandyAssistantDark", String(darkMode));
-}
+      if (Array.isArray(value)) {
+        value.forEach(function (entry, index) {
+          visit(entry, {
+            category: nextContext.category,
+            tags: nextContext.tags,
+            title: nextContext.title,
+            index: index
+          });
+        });
+        return;
+      }
 
-searchBox.addEventListener("input", render);
-clearBtn.addEventListener("click", () => {
-  searchBox.value = "";
-  selectedCategory = "All";
-  searchBox.focus();
-  renderCategories();
-  render();
-});
-themeBtn.addEventListener("click", () => {
-  darkMode = !darkMode;
-  applyTheme();
-});
+      if (typeof value !== "object") return;
 
-document.addEventListener("keydown", (event) => {
-  if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "f") {
-    event.preventDefault();
-    searchBox.focus();
-    searchBox.select();
+      var body = pickString(value, bodyFields);
+      var collectionKey = collectionFields.find(function (field) {
+        return Array.isArray(value[field]);
+      });
+
+      if (!body && collectionKey) {
+        visit(value[collectionKey], {
+          category: pickString(value, categoryFields) || pickString(value, titleFields) || nextContext.category || "",
+          tags: mergeTags(nextContext.tags, pickTags(value)),
+          title: nextContext.title
+        });
+        return;
+      }
+
+      if (body || hasAnyField(value, titleFields.concat(categoryFields, tagFields))) {
+        addSnippet({
+          title: pickString(value, titleFields) || nextContext.title || deriveTitle(body || ""),
+          body: stringifyBody(body || pickString(value, titleFields) || ""),
+          category: pickString(value, categoryFields) || nextContext.category || "",
+          tags: mergeTags(nextContext.tags, pickTags(value))
+        });
+        return;
+      }
+
+      Object.keys(value).forEach(function (key) {
+        var entry = value[key];
+        if (typeof entry === "string" || typeof entry === "number") {
+          visit({ title: humanizeKey(key), body: String(entry) }, nextContext);
+          return;
+        }
+
+        visit(entry, {
+          category: nextContext.category || humanizeKey(key),
+          tags: nextContext.tags,
+          title: nextContext.title
+        });
+      });
+    }
+
+    function addSnippet(snippet) {
+      var body = stringifyBody(snippet.body).trim();
+      if (!body) return;
+
+      var title = stringifyBody(snippet.title).trim() || deriveTitle(body);
+      var category = stringifyBody(snippet.category).trim();
+      var tags = parseTags(snippet.tags);
+
+      snippets.push({
+        id: "snippet-" + snippets.length,
+        title: title,
+        body: body,
+        category: category,
+        tags: tags,
+        haystack: [title, category, tags.join(" "), body].join(" ").toLowerCase()
+      });
+    }
+
+    visit(source, {});
+    return snippets;
   }
 
-  if (event.ctrlKey && /^[1-9]$/.test(event.key)) {
-    event.preventDefault();
-    const index = Number(event.key) - 1;
-    const item = visibleResponses[index];
-    if (item) copyText(item);
+  function hasAnyField(obj, fields) {
+    return fields.some(function (field) {
+      return Object.prototype.hasOwnProperty.call(obj, field) && obj[field] != null && obj[field] !== "";
+    });
   }
-});
 
-applyTheme();
-renderCategories();
-render();
+  function pickString(obj, fields) {
+    for (var i = 0; i < fields.length; i += 1) {
+      var field = fields[i];
+      if (obj[field] == null) continue;
+
+      var value = stringifyBody(obj[field]).trim();
+      if (value) return value;
+    }
+
+    return "";
+  }
+
+  function pickTags(obj) {
+    for (var i = 0; i < tagFields.length; i += 1) {
+      if (obj[tagFields[i]] != null) return obj[tagFields[i]];
+    }
+
+    return [];
+  }
+
+  function mergeTags() {
+    var merged = [];
+    Array.prototype.slice.call(arguments).forEach(function (group) {
+      parseTags(group).forEach(function (tag) {
+        if (merged.indexOf(tag) === -1) merged.push(tag);
+      });
+    });
+
+    return merged;
+  }
+
+  function parseTags(value) {
+    if (value == null || value === "") return [];
+
+    if (Array.isArray(value)) {
+      return value.reduce(function (acc, item) {
+        parseTags(item).forEach(function (tag) {
+          if (acc.indexOf(tag) === -1) acc.push(tag);
+        });
+        return acc;
+      }, []);
+    }
+
+    if (typeof value === "object") {
+      return Object.keys(value).filter(function (key) {
+        return Boolean(value[key]);
+      });
+    }
+
+    return String(value)
+      .split(/[;,|]/)
+      .map(function (tag) {
+        return tag.trim();
+      })
+      .filter(Boolean);
+  }
+
+  function stringifyBody(value) {
+    if (value == null) return "";
+    if (Array.isArray(value)) return value.map(stringifyBody).filter(Boolean).join("\n");
+    return String(value);
+  }
+
+  function humanizeKey(value) {
+    return String(value)
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/\b\w/g, function (letter) {
+        return letter.toUpperCase();
+      });
+  }
+
+  function deriveTitle(body) {
+    var compact = squeeze(body);
+    if (!compact) return "Untitled";
+    return compact.length > 54 ? compact.slice(0, 51) + "..." : compact;
+  }
+
+  function squeeze(value) {
+    return stringifyBody(value).replace(/\s+/g, " ").trim();
+  }
+
+  function applyFilter() {
+    var tokens = state.query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    state.visible = tokens.length
+      ? state.snippets.filter(function (snippet) {
+          return tokens.every(function (token) {
+            return snippet.haystack.indexOf(token) !== -1;
+          });
+        })
+      : state.snippets.slice();
+
+    if (state.selectedIndex >= state.visible.length) state.selectedIndex = Math.max(0, state.visible.length - 1);
+    if (!state.query) state.selectedIndex = 0;
+    render();
+  }
+
+  function render() {
+    var fragment = document.createDocumentFragment();
+
+    state.visible.forEach(function (snippet, index) {
+      var item = document.createElement("li");
+      var button = document.createElement("button");
+      var number = document.createElement("span");
+      var main = document.createElement("span");
+      var head = document.createElement("span");
+      var title = document.createElement("span");
+      var preview = document.createElement("span");
+
+      item.className = "snippet-item" + (index === state.selectedIndex ? " is-selected" : "");
+      item.id = snippet.id;
+      item.setAttribute("role", "option");
+      item.setAttribute("aria-selected", index === state.selectedIndex ? "true" : "false");
+
+      button.className = "snippet-button";
+      button.type = "button";
+      button.dataset.index = String(index);
+      button.setAttribute("aria-label", "Copy " + snippet.title);
+
+      number.className = "snippet-number";
+      number.textContent = index < 9 ? String(index + 1) : "";
+      number.setAttribute("aria-hidden", "true");
+
+      main.className = "snippet-main";
+      head.className = "snippet-head";
+
+      title.className = "snippet-title";
+      title.textContent = snippet.title;
+
+      head.appendChild(title);
+
+      if (snippet.category) {
+        var category = document.createElement("span");
+        category.className = "snippet-category";
+        category.textContent = snippet.category;
+        head.appendChild(category);
+      }
+
+      preview.className = "snippet-preview";
+      preview.textContent = squeeze(snippet.body);
+
+      main.appendChild(head);
+      main.appendChild(preview);
+
+      if (snippet.tags.length) {
+        var tags = document.createElement("span");
+        tags.className = "snippet-tags";
+        snippet.tags.slice(0, 4).forEach(function (tagText) {
+          var tag = document.createElement("span");
+          tag.className = "tag";
+          tag.textContent = "#" + tagText;
+          tags.appendChild(tag);
+        });
+        main.appendChild(tags);
+      }
+
+      button.appendChild(number);
+      button.appendChild(main);
+      button.addEventListener("click", function () {
+        state.selectedIndex = index;
+        render();
+        copySnippet(snippet);
+      });
+
+      item.appendChild(button);
+      fragment.appendChild(item);
+    });
+
+    els.list.replaceChildren(fragment);
+    els.empty.hidden = state.visible.length > 0;
+    els.count.textContent = countLabel();
+    updateActiveDescendant();
+  }
+
+  function countLabel() {
+    var total = state.snippets.length;
+    var shown = state.visible.length;
+    if (!total) return "No snippets found";
+    if (shown === total) return total + " snippet" + (total === 1 ? "" : "s");
+    return shown + " of " + total + " snippets";
+  }
+
+  function updateActiveDescendant() {
+    var active = state.visible[state.selectedIndex];
+    if (active) {
+      els.search.setAttribute("aria-activedescendant", active.id);
+    } else {
+      els.search.removeAttribute("aria-activedescendant");
+    }
+  }
+
+  function moveSelection(delta) {
+    if (!state.visible.length) return;
+    state.selectedIndex = (state.selectedIndex + delta + state.visible.length) % state.visible.length;
+    render();
+    scrollSelectedIntoView();
+  }
+
+  function scrollSelectedIntoView() {
+    var selected = els.list.querySelector(".snippet-item.is-selected");
+    if (selected) {
+      selected.scrollIntoView({ block: "nearest" });
+    }
+  }
+
+  function copyVisibleIndex(index) {
+    var snippet = state.visible[index];
+    if (!snippet) return;
+
+    state.selectedIndex = index;
+    render();
+    scrollSelectedIntoView();
+    copySnippet(snippet);
+  }
+
+  function copySnippet(snippet) {
+    copyText(snippet.body)
+      .then(function () {
+        showToast("Copied");
+      })
+      .catch(function () {
+        showToast("Copy failed");
+      });
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).catch(function () {
+        return fallbackCopyText(text);
+      });
+    }
+
+    return fallbackCopyText(text);
+  }
+
+  function fallbackCopyText(text) {
+    return new Promise(function (resolve, reject) {
+      var textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.setAttribute("readonly", "");
+      textArea.style.position = "fixed";
+      textArea.style.top = "-1000px";
+      textArea.style.left = "-1000px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      try {
+        if (document.execCommand("copy")) {
+          resolve();
+        } else {
+          reject(new Error("Copy command failed"));
+        }
+      } catch (error) {
+        reject(error);
+      } finally {
+        document.body.removeChild(textArea);
+      }
+    });
+  }
+
+  function showToast(message) {
+    window.clearTimeout(toastTimer);
+    els.toast.textContent = message;
+    els.toast.classList.add("is-visible");
+    toastTimer = window.setTimeout(function () {
+      els.toast.classList.remove("is-visible");
+    }, 1200);
+  }
+
+  function onKeyDown(event) {
+    if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "f") {
+      event.preventDefault();
+      els.search.focus();
+      els.search.select();
+      return;
+    }
+
+    if (event.ctrlKey && !event.shiftKey && /^[1-9]$/.test(event.key)) {
+      event.preventDefault();
+      copyVisibleIndex(Number(event.key) - 1);
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      moveSelection(1);
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      moveSelection(-1);
+      return;
+    }
+
+    if (event.key === "Enter" && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+      event.preventDefault();
+      if (state.visible[state.selectedIndex]) copySnippet(state.visible[state.selectedIndex]);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      if (state.query || els.search.value) {
+        event.preventDefault();
+        els.search.value = "";
+        state.query = "";
+        state.selectedIndex = 0;
+        applyFilter();
+      }
+    }
+  }
+
+  function init() {
+    state.snippets = normalizeSource(getSnippetSource());
+    state.visible = state.snippets.slice();
+
+    els.search.addEventListener("input", function () {
+      state.query = els.search.value.trim();
+      state.selectedIndex = 0;
+      applyFilter();
+    });
+
+    document.addEventListener("keydown", onKeyDown);
+    render();
+    els.search.focus();
+  }
+
+  init();
+})();

@@ -1,49 +1,45 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Frandy Assistant</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <header class="app-header">
-    <div>
-      <h1>Frandy Assistant</h1>
-      <p>Canned responses for Service Desk. Search, copy, then paste anywhere.</p>
-    </div>
-    <button id="themeBtn" type="button" class="ghost-btn">Dark</button>
-  </header>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quick Text</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="launcher" aria-label="Quick Text snippet picker">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">QT</span>
+          <div class="brand-copy">
+            <h1>Quick Text</h1>
+            <p id="resultCount">Loading snippets</p>
+          </div>
+        </div>
+        <div class="toast" id="toast" role="status" aria-live="polite">Copied</div>
+      </header>
 
-  <main class="app-shell">
-    <aside class="sidebar">
-      <div class="sidebar-title">Categories</div>
-      <nav id="categoryList" class="category-list" aria-label="Categories"></nav>
-    </aside>
+      <div class="search-wrap">
+        <label class="sr-only" for="searchInput">Search snippets</label>
+        <input
+          class="search-input"
+          id="searchInput"
+          type="search"
+          placeholder="Search snippets"
+          autocomplete="off"
+          spellcheck="false"
+          aria-controls="snippetList"
+          aria-autocomplete="list"
+        >
+      </div>
 
-    <section class="content">
-      <section class="toolbar">
-        <input id="searchBox" type="search" placeholder="Search title, category, or response..." autofocus />
-        <button id="clearBtn" type="button">Clear</button>
+      <section class="results-wrap" aria-label="Snippet results">
+        <ul class="snippet-list" id="snippetList" role="listbox"></ul>
+        <div class="empty-state" id="emptyState" hidden>No snippets match</div>
       </section>
+    </main>
 
-      <section class="help">
-        <strong>Shortcuts:</strong>
-        <span><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> search</span>
-        <span><kbd>Ctrl</kbd> + <kbd>1-9</kbd> copy visible item</span>
-        <span>Click a card or Copy button to copy</span>
-      </section>
-
-      <section id="status" aria-live="polite"></section>
-      <section id="responseList" class="response-list"></section>
-    </section>
-  </main>
-
-  <footer>
-    Edit canned responses in <code>responses.js</code>. Change shortcuts in <code>app.js</code>.
-  </footer>
-
-  <script src="responses.js"></script>
-  <script src="app.js"></script>
-</body>
+    <script src="responses.js"></script>
+    <script src="app.js"></script>
+  </body>
 </html>
