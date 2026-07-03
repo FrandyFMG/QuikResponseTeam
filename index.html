@@ -3,29 +3,40 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Quick Text Paste Web</title>
+  <title>Frandy Assistant</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header>
-    <h1>Quick Text Paste Web</h1>
-    <p>Search, click, copy, then paste into ServiceNow, Notepad, Teams, Outlook, or Citrix.</p>
+  <header class="app-header">
+    <div>
+      <h1>Frandy Assistant</h1>
+      <p>Canned responses for Service Desk. Search, copy, then paste anywhere.</p>
+    </div>
+    <button id="themeBtn" type="button" class="ghost-btn">Dark</button>
   </header>
 
-  <main>
-    <section class="toolbar">
-      <input id="searchBox" type="search" placeholder="Search responses..." autofocus />
-      <button id="clearBtn" type="button">Clear</button>
-    </section>
+  <main class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-title">Categories</div>
+      <nav id="categoryList" class="category-list" aria-label="Categories"></nav>
+    </aside>
 
-    <section class="help">
-      <strong>Shortcuts:</strong>
-      <span><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> search</span>
-      <span><kbd>Ctrl</kbd> + <kbd>1-9</kbd> copy visible item</span>
-    </section>
+    <section class="content">
+      <section class="toolbar">
+        <input id="searchBox" type="search" placeholder="Search title, category, or response..." autofocus />
+        <button id="clearBtn" type="button">Clear</button>
+      </section>
 
-    <section id="status" aria-live="polite"></section>
-    <section id="responseList" class="response-list"></section>
+      <section class="help">
+        <strong>Shortcuts:</strong>
+        <span><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> search</span>
+        <span><kbd>Ctrl</kbd> + <kbd>1-9</kbd> copy visible item</span>
+        <span>Click a card or Copy button to copy</span>
+      </section>
+
+      <section id="status" aria-live="polite"></section>
+      <section id="responseList" class="response-list"></section>
+    </section>
   </main>
 
   <footer>
