@@ -8,34 +8,29 @@
 </head>
 <body>
   <header>
-    <h1>Quick Text Paste</h1>
-    <p>Click a response to copy it, then paste into ServiceNow, Notepad, Teams, or Citrix.</p>
+    <h1>Quick Text Paste Web</h1>
+    <p>Search, click, copy, then paste into ServiceNow, Notepad, Teams, Outlook, or Citrix.</p>
   </header>
 
   <main>
     <section class="toolbar">
-      <input id="searchBox" type="search" placeholder="Search responses..." autocomplete="off" />
-      <select id="categoryFilter">
-        <option value="all">All categories</option>
-      </select>
-      <button id="clearSearch">Clear</button>
+      <input id="searchBox" type="search" placeholder="Search responses..." autofocus />
+      <button id="clearBtn" type="button">Clear</button>
+    </section>
+
+    <section class="help">
+      <strong>Shortcuts:</strong>
+      <span><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> search</span>
+      <span><kbd>Ctrl</kbd> + <kbd>1-9</kbd> copy visible item</span>
     </section>
 
     <section id="status" aria-live="polite"></section>
-    <section id="responseGrid" class="grid"></section>
+    <section id="responseList" class="response-list"></section>
   </main>
 
-  <template id="cardTemplate">
-    <article class="card">
-      <div class="cardTop">
-        <span class="category"></span>
-        <button class="copyBtn">Copy</button>
-      </div>
-      <h2></h2>
-      <p></p>
-      <textarea readonly></textarea>
-    </article>
-  </template>
+  <footer>
+    Edit canned responses in <code>responses.js</code>. Change shortcuts in <code>app.js</code>.
+  </footer>
 
   <script src="responses.js"></script>
   <script src="app.js"></script>

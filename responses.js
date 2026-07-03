@@ -1,50 +1,50 @@
-const RESPONSES = [
-  {
-    title: "Greeting - Service Desk",
-    category: "General",
-    description: "Opening message for chats or tickets.",
-    text: "Hi, thank you for contacting the Service Desk. I will be assisting you with this request."
-  },
-  {
-    title: "Request More Details",
-    category: "General",
-    description: "Ask user for missing information.",
-    text: "Could you please provide more details about the issue, including any error message, affected application, and when it started?"
-  },
-  {
-    title: "Troubleshooting Started",
-    category: "ServiceNow",
-    description: "Ticket work note.",
-    text: "Troubleshooting has been started. I am reviewing the details provided and checking the possible cause of the issue."
-  },
-  {
-    title: "User Not Available",
-    category: "ServiceNow",
-    description: "When user is unreachable.",
-    text: "Attempted to contact the user but they were unavailable. Awaiting user response to continue troubleshooting."
-  },
-  {
-    title: "Resolved Confirmation",
-    category: "ServiceNow",
-    description: "Ask user to confirm resolution.",
-    text: "Could you please confirm if the issue is now resolved on your end?"
-  },
-  {
-    title: "Closing Note",
-    category: "ServiceNow",
-    description: "Ticket closure note.",
-    text: "Issue has been resolved and confirmed. Ticket will now be closed."
-  },
+// Edit this file to add, remove, or change canned responses.
+// Format: title, category, text
+
+window.RESPONSES = [
   {
     title: "Password Reset Done",
-    category: "Account",
-    description: "After password reset.",
-    text: "Your password has been reset. Please try signing in again and let us know if you still experience any issue."
+    category: "Accounts",
+    text: "Hi,\n\nYour password has been reset. Please wait a few minutes before trying to sign in again.\n\nRegards,\nFrandy"
   },
   {
-    title: "Escalation Note",
-    category: "Escalation",
-    description: "Escalating to next team.",
-    text: "This issue requires further investigation and has been escalated to the appropriate support team. We will update you once we receive feedback."
+    title: "Account Unlocked",
+    category: "Accounts",
+    text: "Hi,\n\nYour account has been unlocked. Please try signing in again and let us know if you still have issues.\n\nRegards,\nFrandy"
+  },
+  {
+    title: "MFA Re-registration",
+    category: "MFA",
+    text: "Hi,\n\nWe have reset your MFA registration. Please sign in again and follow the prompts to set up Microsoft Authenticator.\n\nRegards,\nFrandy"
+  },
+  {
+    title: "Ticket Update Request",
+    category: "ServiceNow",
+    text: "Hi,\n\nWe are checking this ticket and will provide an update as soon as possible.\n\nRegards,\nFrandy"
+  },
+  {
+    title: "Need More Information",
+    category: "ServiceNow",
+    text: "Hi,\n\nCould you please provide more details or a screenshot of the error so we can investigate further?\n\nRegards,\nFrandy"
+  },
+  {
+    title: "Resolved Closing Note",
+    category: "ServiceNow",
+    text: "Issue has been resolved. Closing this ticket. Please reopen or submit a new ticket if further assistance is needed."
+  },
+  {
+    title: "SAP Password Reset",
+    category: "SAP",
+    text: "Hi,\n\nYour SAP password has been reset. Please wait 15 minutes before attempting to log in again.\n\nRegards,\nFrandy"
+  },
+  {
+    title: "Teams Cache Basic Step",
+    category: "Teams",
+    text: "Hi,\n\nPlease try signing out of Microsoft Teams, close the app completely, then open Teams again and sign back in.\n\nRegards,\nFrandy"
+  },
+  {
+    title: "Thank You",
+    category: "General",
+    text: "Thank you for confirming. We will proceed accordingly.\n\nRegards,\nFrandy"
   }
 ];

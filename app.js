@@ -1,68 +1,96 @@
-const grid = document.getElementById("responseGrid");
+const list = document.getElementById("responseList");
 const searchBox = document.getElementById("searchBox");
-const categoryFilter = document.getElementById("categoryFilter");
-const clearSearch = document.getElementById("clearSearch");
+const clearBtn = document.getElementById("clearBtn");
 const statusBox = document.getElementById("status");
-const template = document.getElementById("cardTemplate");
 
-function loadCategories() {
-  const categories = [...new Set(RESPONSES.map(item => item.category))].sort();
-  for (const category of categories) {
-    const option = document.createElement("option");
-    option.value = category;
-    option.textContent = category;
-    categoryFilter.appendChild(option);
+let visibleResponses = [];
+
+function showStatus(message) {
+  statusBox.textContent = message;
+  setTimeout(() => {
+    if (statusBox.textContent === message) statusBox.textContent = "";
+  }, 1800);
+}
+
+async function copyText(item) {
+  try {
+    await navigator.clipboard.writeText(item.text);
+    showStatus(`Copied: ${item.title}`);
+  } catch (err) {
+    showStatus("Copy failed. Highlight the text and press Ctrl+C.");
   }
 }
 
-function copyText(text, title) {
-  navigator.clipboard.writeText(text).then(() => {
-    statusBox.textContent = `Copied: ${title}`;
-    setTimeout(() => statusBox.textContent = "", 2500);
-  }).catch(() => {
-    statusBox.textContent = "Copy failed. Highlight the text manually and press Ctrl+C.";
-  });
-}
-
-function renderResponses() {
+function render() {
   const query = searchBox.value.trim().toLowerCase();
-  const category = categoryFilter.value;
 
-  const filtered = RESPONSES.filter(item => {
-    const matchesCategory = category === "all" || item.category === category;
-    const haystack = `${item.title} ${item.category} ${item.description} ${item.text}`.toLowerCase();
-    const matchesSearch = !query || haystack.includes(query);
-    return matchesCategory && matchesSearch;
+  visibleResponses = window.RESPONSES.filter(item => {
+    const combined = `${item.title} ${item.category} ${item.text}`.toLowerCase();
+    return combined.includes(query);
   });
 
-  grid.innerHTML = "";
+  list.innerHTML = "";
 
-  if (filtered.length === 0) {
-    statusBox.textContent = "No matching responses found.";
+  if (visibleResponses.length === 0) {
+    list.innerHTML = `<div class="card">No matching responses found.</div>`;
     return;
   }
 
-  statusBox.textContent = `${filtered.length} response(s) available.`;
+  visibleResponses.forEach((item, index) => {
+    const card = document.createElement("article");
+    card.className = "card";
 
-  for (const item of filtered) {
-    const card = template.content.cloneNode(true);
-    card.querySelector(".category").textContent = item.category;
-    card.querySelector("h2").textContent = item.title;
-    card.querySelector("p").textContent = item.description;
-    card.querySelector("textarea").value = item.text;
-    card.querySelector(".copyBtn").addEventListener("click", () => copyText(item.text, item.title));
-    card.querySelector("textarea").addEventListener("click", event => event.target.select());
-    grid.appendChild(card);
-  }
+    const shortcut = index < 9 ? `<div class="shortcut">Shortcut: Ctrl + ${index + 1}</div>` : "";
+
+    card.innerHTML = `
+      <div class="card-top">
+        <div>
+          <h2 class="title">${item.title}</h2>
+          <span class="category">${item.category}</span>
+        </div>
+        <button type="button">Copy</button>
+      </div>
+      <div class="preview">${escapeHtml(item.text)}</div>
+      ${shortcut}
+    `;
+
+    card.querySelector("button").addEventListener("click", () => copyText(item));
+    card.addEventListener("dblclick", () => copyText(item));
+    list.appendChild(card);
+  });
 }
 
-searchBox.addEventListener("input", renderResponses);
-categoryFilter.addEventListener("change", renderResponses);
-clearSearch.addEventListener("click", () => {
+function escapeHtml(text) {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+searchBox.addEventListener("input", render);
+clearBtn.addEventListener("click", () => {
   searchBox.value = "";
-  categoryFilter.value = "all";
-  renderResponses();
+  searchBox.focus();
+  render();
 });
 
-loadCategories();
-renderResponses();
+document.addEventListener("keydown", (event) => {
+  // Shortcut to focus search: Ctrl + Shift + F
+  if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "f") {
+    event.preventDefault();
+    searchBox.focus();
+    searchBox.select();
+  }
+
+  // Shortcuts to copy visible response 1-9: Ctrl + 1 through Ctrl + 9
+  if (event.ctrlKey && /^[1-9]$/.test(event.key)) {
+    event.preventDefault();
+    const index = Number(event.key) - 1;
+    const item = visibleResponses[index];
+    if (item) copyText(item);
+  }
+});
+
+render();
