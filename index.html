@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quick Text Paste Web</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Quick Text Paste</h1>
+    <p>Click a response to copy it, then paste into ServiceNow, Notepad, Teams, or Citrix.</p>
+  </header>
+
+  <main>
+    <section class="toolbar">
+      <input id="searchBox" type="search" placeholder="Search responses..." autocomplete="off" />
+      <select id="categoryFilter">
+        <option value="all">All categories</option>
+      </select>
+      <button id="clearSearch">Clear</button>
+    </section>
+
+    <section id="status" aria-live="polite"></section>
+    <section id="responseGrid" class="grid"></section>
+  </main>
+
+  <template id="cardTemplate">
+    <article class="card">
+      <div class="cardTop">
+        <span class="category"></span>
+        <button class="copyBtn">Copy</button>
+      </div>
+      <h2></h2>
+      <p></p>
+      <textarea readonly></textarea>
+    </article>
+  </template>
+
+  <script src="responses.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
