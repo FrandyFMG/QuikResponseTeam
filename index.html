@@ -3,19 +3,20 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Quick Text</title>
+    <title>QuikResponse</title>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <main class="launcher" aria-label="Quick Text snippet picker">
+    <main class="launcher" aria-label="QuikResponse snippet picker">
       <header class="topbar">
         <div class="brand">
-          <span class="brand-mark" aria-hidden="true">QT</span>
+          <span class="brand-mark" aria-hidden="true">QR</span>
           <div class="brand-copy">
-            <h1>Quick Text</h1>
+            <h1>QuikResponse</h1>
             <p id="resultCount">Loading snippets</p>
           </div>
         </div>
+        <div class="mode-pill" id="modePill">Categories</div>
         <div class="toast" id="toast" role="status" aria-live="polite">Copied</div>
       </header>
 
@@ -25,18 +26,30 @@
           class="search-input"
           id="searchInput"
           type="search"
-          placeholder="Search snippets"
+          placeholder="Type to search, or press a category number"
           autocomplete="off"
           spellcheck="false"
-          aria-controls="snippetList"
+          aria-controls="optionList"
           aria-autocomplete="list"
+          autofocus
         >
       </div>
 
-      <section class="results-wrap" aria-label="Snippet results">
-        <ul class="snippet-list" id="snippetList" role="listbox"></ul>
-        <div class="empty-state" id="emptyState" hidden>No snippets match</div>
+      <section class="content-wrap" aria-label="Picker content">
+        <ul class="option-list" id="optionList" role="listbox"></ul>
+        <aside class="preview-pane" id="previewPane" aria-label="Selected snippet preview">
+          <div class="preview-title" id="previewTitle">Select a category</div>
+          <pre class="preview-body" id="previewBody">Press 1-9 to choose a category. Then press 1-9 again to copy a response.</pre>
+        </aside>
+        <div class="empty-state" id="emptyState" hidden>No match</div>
       </section>
+
+      <footer class="helpbar">
+        <span>Numbers: quick select</span>
+        <span>Up/Down: move</span>
+        <span>Enter: copy/open</span>
+        <span>Esc: back</span>
+      </footer>
     </main>
 
     <script src="responses.js"></script>
